@@ -38,18 +38,22 @@ try:
         shitty_mutex.value = '1'
         shitty_mutex.save()
 
-    # Retrieve the last 100 transactions. Check all new transactions
+    # Retrieve the last 800 transactions. Check all new transactions
     # against them for insurance that we will not pay something 
     # which has already been processed.
-    old_tx_ids = [i for sub in Reflector.select(Reflector.tx).order_by(Reflector.id.desc()).limit(100).tuples() for i in sub]
+    old_tx_ids = [i for sub in Reflector.select(Reflector.tx).order_by(Reflector.id.desc()).limit(800).tuples() for i in sub]
 
-    # Grab the last transaction, use its timestamp to find new transactions
-    last_tx = Reflector.select().order_by(Reflector.id.desc()).limit(1)
-    utcts = datetime.datetime.strptime(str(last_tx[0].date), '%Y-%m-%d %H:%M:%S')
-    print "reflec2r: Reflecting transactions from " + utcts.isoformat() + " onward."
+    print "reflec2r: Fetching transactions from Dwolla."
 
-    # Query Dwolla for new transactions, reimburse those that qualify
-    for tx in t.get(types='money_received', sinceDate=utcts.isoformat() + 'Z'):
+    # Query Dwolla for transactions
+    txlist = t.get(types='money_received', limit=200) \
+        + t.get(types='money_received', limit=200, skip=200) \
+        + t.get(types='money_received', limit=200, skip=400) \
+        + t.get(types='money_received', limit=200, skip=600) \
+        + t.get(types='money_received', limit=200, skip=800) \
+
+    # Reimburse those that qualify
+    for tx in txlist:
         if tx['Id'] not in old_tx_ids:
             r = t.send(tx['Source']['Id'], tx['Amount'])
             Reflector.create(amount=tx['Amount'], date=datetime.datetime.now(), refund=r, tx=tx['Id']).save()
