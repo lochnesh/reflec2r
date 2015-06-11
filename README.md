@@ -9,7 +9,7 @@ Written in Python 2.7.x, using [dwolla-python](https://github.com/Dwolla/dwolla-
 ```bash
 git clone http://stash.dwolla.net/scm/dlab/reflec2r.git
 cd reflec2r
-pip install dwolla-python peewee
+pip install dwolla peewee
 ```
 
 #### Create your database
@@ -65,6 +65,10 @@ reflec2r is simple, it just:
 * Unlocks 'mutex'.
 
 ## Changelog
+
+2.0.2
+* Better history checking
+* Removed timestamp dependency
 
 2.0.1
 * Catch all exceptions
