@@ -38,10 +38,10 @@ try:
         shitty_mutex.value = '1'
         shitty_mutex.save()
 
-    # Retrieve the last 800 transactions. Check all new transactions
+    # Retrieve entire database for posterity. Check all new transactions
     # against them for insurance that we will not pay something 
     # which has already been processed.
-    old_tx_ids = [i for sub in Reflector.select(Reflector.tx).order_by(Reflector.id.desc()).limit(800).tuples() for i in sub]
+    old_tx_ids = [i for sub in Reflector.select(Reflector.tx).order_by(Reflector.id.desc()).tuples() for i in sub]
 
     print "reflec2r: Fetching transactions from Dwolla."
 
@@ -54,12 +54,12 @@ try:
 
     # Reimburse those that qualify
     for tx in txlist:
-        if tx['Id'] not in old_tx_ids:
+        if (tx['Id'] not in old_tx_ids) and (tx['Status'] == 'processed') and (tx['Notes'] != "reflec2r/do-not-reimburse"):
             r = t.send(tx['Source']['Id'], tx['Amount'])
             Reflector.create(amount=tx['Amount'], date=datetime.datetime.now(), refund=r, tx=tx['Id']).save()
             print "reflec2r: Successfully sent $" + str(tx['Amount']) + " to " + str(tx['Source']['Id'])
         else:
-            print "reflec2r: Skipping transaction #" + str(tx['Id']) + ", already reflected."
+            print "reflec2r: Skipping transaction #" + str(tx['Id']) + ", already reflected or flagged."
 
     # Unlock mutex, exit
     shitty_mutex.value = 0
@@ -71,6 +71,8 @@ try:
 except Exception as e:
     print "reflec2r: Execution failed on " + str(datetime.datetime.now()) + ", dumping exception, unlocking and quitting."
     print "reflec2r: " + e.message
+
+    shitty_mutex = ReflectorSettings.get(ReflectorSettings.key == 'running')
     shitty_mutex.value = 0
     shitty_mutex.save()
     exit(-1)
