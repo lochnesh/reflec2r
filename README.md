@@ -7,7 +7,7 @@ Written in Python 2.7.x, using [dwolla-python](https://github.com/Dwolla/dwolla-
 
 #### Grab your dependencies
 ```bash
-git clone http://stash.dwolla.net/scm/dlab/reflec2r.git
+git clone https://github.com/Dwolla/reflec2r.git
 cd reflec2r
 pip install dwolla peewee
 ```
